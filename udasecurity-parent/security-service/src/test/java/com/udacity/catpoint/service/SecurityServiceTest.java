@@ -1,10 +1,13 @@
 package com.udacity.catpoint.service;
 
 import com.udacity.catpoint.data.*;
-import com.udacity.imageservice.FakeImageService;
+import com.udacity.imageservice.ImageService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -12,12 +15,16 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class SecurityServiceTest {
 
     @Mock
     private SecurityRepository securityRepository;
+
+    @Mock
+    private ImageService imageService;
 
     private SecurityService securityService;
 
@@ -29,7 +36,7 @@ public class SecurityServiceTest {
         securityService =
                 new SecurityService(
                         securityRepository,
-                        new FakeImageService()
+                        imageService
                 );
     }
 
@@ -235,5 +242,32 @@ public class SecurityServiceTest {
 
         verify(securityRepository)
                 .updateSensor(sensor);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void sensorActivationUpdatesSensorState(boolean active) {
+
+        Sensor sensor =
+                new Sensor(
+                        "Door",
+                        SensorType.DOOR
+                );
+
+        when(securityRepository.getAlarmStatus())
+                .thenReturn(AlarmStatus.NO_ALARM);
+
+        when(securityRepository.getArmingStatus())
+                .thenReturn(ArmingStatus.DISARMED);
+
+        securityService.changeSensorActivationStatus(
+                sensor,
+                active
+        );
+
+        assertEquals(
+                active,
+                sensor.getActive()
+        );
     }
 }
